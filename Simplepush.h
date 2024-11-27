@@ -21,8 +21,6 @@ class Simplepush {
 		String fdb;
 		AES aes;
 		void sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex, char *buta, char *butb);
-		int getHttpPostBodyLen(char *key, char *title, char *message, char *event, char *ivHex);
-		void buildHttpPostBody(char *key, char *title, char *message, char *event, char *ivHex, char *body);
 		void genIV(byte *iv);
 		uint8_t getRandom();
 		void encrypt(char *data, int dataSize, uint8_t *key, uint8_t *iv, char *cipherUrlSafeBase64);
