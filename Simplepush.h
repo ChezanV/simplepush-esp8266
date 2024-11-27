@@ -5,6 +5,7 @@
 #include <Hash.h>
 
 #include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 #include "AES.h"
 #include "base64.h"
@@ -13,11 +14,13 @@ class Simplepush {
 	public:
 		Simplepush();
 		~Simplepush();
-		void send(char *key, char *title, char *message, char *event);
-		void sendEncrypted(char *key, char *password, char *salt, char *title, char *message, char *event);
+		String wait_response();
+		void send(char *key, char *title, char *message, char *event, char *buta, char *butb);
+		void sendEncrypted(char *key, char *password, char *salt, char *title, char *message, char *event, char *buta, char *butb);
 	private:
+		String fdb;
 		AES aes;
-		void sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex);
+		void sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex, char *buta, char *butb);
 		int getHttpPostBodyLen(char *key, char *title, char *message, char *event, char *ivHex);
 		void buildHttpPostBody(char *key, char *title, char *message, char *event, char *ivHex, char *body);
 		void genIV(byte *iv);
