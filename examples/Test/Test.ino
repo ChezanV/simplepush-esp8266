@@ -29,9 +29,9 @@ void setup() {
 
 void loop() {
 	if((WiFiMulti.run() == WL_CONNECTED)) {
-		simple.send("YourSimplepushKey", "Wow", "This is so easy", "Event");
-		simple.send("YourSimplepushKey", NULL, "No title and no event. Just a message.", NULL);
-		simple.sendEncrypted("YourSimplepushKey", "password", "salt", "Wow", "This is so secure.", "Event");
+		simple.send("YourSimplepushKey", "Wow", "This is so easy", "Event", NULL, NULL);
+		simple.send("YourSimplepushKey", NULL, "No title and no event. Just a message.", NULL, NULL, NULL);
+		simple.sendEncrypted("YourSimplepushKey", "password", "salt", "Wow", "This is so secure.", "Event", NULL, NULL);
 		delay(5000);
 	}
 }
