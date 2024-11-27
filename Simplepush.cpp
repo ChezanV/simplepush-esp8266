@@ -3,17 +3,21 @@
 const uint8_t N_BLOCK_IV = 16;
 const char *SALT_COMPATIBILITY = "1789F0B8C4A051E5";
 const char *API_ENDPOINT = "http://api.simplepush.io/send";
+const char *API_FEEDBACK = "http://api.simplepush.io/1/feedback/";
 AES aes;
+WiFiClient Simpleclient;
+JsonDocument Feedback_json;
+JsonDocument Response_json;
 
 Simplepush::Simplepush(){}
 
 Simplepush::~Simplepush(){}
 
-void Simplepush::send(char *key, char *title, char *message, char *event){
-	sendHttpPost(key, title, message, event, NULL);
+void Simplepush::send(char *key, char *title, char *message, char *event, char *buta, char *butb){
+	sendHttpPost(key, title, message, event, NULL, buta, butb);
 }
 
-void Simplepush::sendEncrypted(char *key, char *password, char *salt, char *title, char *message, char *event) {
+void Simplepush::sendEncrypted(char *key, char *password, char *salt, char *title, char *message, char *event, char *buta, char *butb){
 
 	// Generate key
 	uint8_t encKey[16];
@@ -34,29 +38,93 @@ void Simplepush::sendEncrypted(char *key, char *password, char *salt, char *titl
 	if(title) {
 		char titleCipher[getBase64CipherLen(strlen(title))];
 		encrypt(title, strlen(title), encKey, ivCopy, titleCipher);
-		sendHttpPost(key, titleCipher, messageCipher, event, ivHex);
+		
+		sendHttpPost(key, titleCipher, messageCipher, event, ivHex, buta, butb);
 	} else {
-		sendHttpPost(key, NULL, messageCipher, event, ivHex);
+		sendHttpPost(key, NULL, messageCipher, event, ivHex, buta, butb);
 	}
 }
 
-void Simplepush::sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex) {
+void Simplepush::sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex, char *buta, char *butb) {
 	HTTPClient http;
-	http.begin(API_ENDPOINT);
-	http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-
-	int bodyLen = getHttpPostBodyLen(key, title, message, event, ivHex);
-
-	char body[bodyLen+1];
-
-	buildHttpPostBody(key, title, message, event, ivHex, body);
-
-	http.POST(body);
-
+	http.begin(Simpleclient, API_ENDPOINT);
+	http.addHeader("Content-Type", "application/json");
+	String json;
+	StaticJsonDocument<300> Send_json;
+	Send_json["key"] = key;
+	Send_json["title"] = title;
+	Send_json["msg"] = message;
+	Send_json["event"] = event;
+	if(ivHex) {
+		Send_json["encrypted"] = "true";
+		Send_json["iv"] = ivHex;
+	}
+	if(buta || butb){
+		JsonArray arr = Send_json.createNestedArray("actions");
+		if(buta) {
+			arr.add(buta);
+		}
+		if(butb) {
+			arr.add(butb);
+		}
+	}
+	
+/*
+JsonArray arr = Send_json.createNestedArray("actions");
+JsonObject obj = arr.createNestedObject();
+obj["name"] = "Yes";
+obj["url"] = "https://your.domain/yes";
+JsonObject obj2 = arr.createNestedObject();
+obj2["name"] = "No";
+obj2["url"] = "https://your.domain/yes";
+*/
+	serializeJson(Send_json, json);
+	int httpCode = http.POST(json);
+	if (httpCode > 0) {
+		if (httpCode == HTTP_CODE_OK) {
+			const String& payload = http.getString();
+			DeserializationError error = deserializeJson(Feedback_json, payload);
+			if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.c_str());
+				return;
+			}
+			fdb = (const char*)Feedback_json["feedbackId"];
+		}
+	}
+	else {
+		Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+	}
 	http.end();
 }
-
+String Simplepush::wait_response(){
+	String q;
+	HTTPClient http;
+	char body[strlen(API_FEEDBACK)+strlen(fdb.c_str())+1];
+	strcpy(body, API_FEEDBACK);
+	strcat(body, fdb.c_str());
+	http.begin(Simpleclient, body);
+	int httpCode = http.GET();
+	if (httpCode > 0) {
+		if (httpCode == HTTP_CODE_OK) {
+			const String& payload = http.getString();
+			DeserializationError error = deserializeJson(Response_json, payload);
+			if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.c_str());
+				return error.c_str();
+			}
+			q = (const char*)Response_json["action_selected"];
+		}
+	}
+	else {
+		Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+	}	
+	http.end();
+	return q;
+}
 int Simplepush::getHttpPostBodyLen(char *key, char *title, char *message, char *event, char *ivHex) {
+	//size_t len = root.measureLength();
 	int bodyLen = strlen("key=") + strlen(key) + strlen("&msg=") + strlen(message);
 
 	if(title) {
@@ -64,7 +132,7 @@ int Simplepush::getHttpPostBodyLen(char *key, char *title, char *message, char *
 	}
 
 	if(event) {
-		bodyLen += (strlen("&event=") + strlen(event));
+		bodyLen += (strlen("&actions=") + strlen(event));
 	}
 
 	if(ivHex) {
