@@ -69,15 +69,6 @@ void Simplepush::sendHttpPost(char *key, char* title, char* message, char *event
 		}
 	}
 	
-/*
-JsonArray arr = Send_json.createNestedArray("actions");
-JsonObject obj = arr.createNestedObject();
-obj["name"] = "Yes";
-obj["url"] = "https://your.domain/yes";
-JsonObject obj2 = arr.createNestedObject();
-obj2["name"] = "No";
-obj2["url"] = "https://your.domain/yes";
-*/
 	serializeJson(Send_json, json);
 	int httpCode = http.POST(json);
 	if (httpCode > 0) {
@@ -122,47 +113,6 @@ String Simplepush::wait_response(){
 	}	
 	http.end();
 	return q;
-}
-int Simplepush::getHttpPostBodyLen(char *key, char *title, char *message, char *event, char *ivHex) {
-	//size_t len = root.measureLength();
-	int bodyLen = strlen("key=") + strlen(key) + strlen("&msg=") + strlen(message);
-
-	if(title) {
-		bodyLen += (strlen("&title=") + strlen(title));
-	}
-
-	if(event) {
-		bodyLen += (strlen("&actions=") + strlen(event));
-	}
-
-	if(ivHex) {
-		bodyLen += (strlen("&encrypted=true&iv=") + strlen(ivHex));
-	}
-
-	return bodyLen;
-}
-
-void Simplepush::buildHttpPostBody(char *key, char *title, char *message, char *event, char *ivHex, char *body) {
-	strcpy(body, "key=");
-	strcat(body, key);
-
-	if(title) {
-		strcat(body, "&title=");
-		strcat(body, title);
-	}
-
-	strcat(body, "&msg=");
-	strcat(body, message);
-
-	if(event) {
-		strcat(body, "&event=");
-		strcat(body, event);
-	}
-
-	if(ivHex) {
-		strcat(body, "&encrypted=true&iv=");
-		strcat(body, ivHex);
-	}
 }
 
 void Simplepush::encrypt(char *data, int dataSize, uint8_t *key, uint8_t *iv, char *cipherUrlSafeBase64) {
