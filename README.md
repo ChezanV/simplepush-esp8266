@@ -6,6 +6,6 @@
 - Send encrypted push notifications (no HTTPS required)
 
 ## Usage
-Download [Simplepush.zip](https://github.com/simplepush/simplepush-esp8266/raw/master/Simplepush.zip) and import the ZIP file in the Arduino IDE (`Sketch` -> `Include library` -> `Add .ZIP library`).
+Download Simplepush.zip and import the ZIP file in the Arduino IDE (`Sketch` -> `Include library` -> `Add .ZIP library`).
 Take a look at the example sketch to find out how to use the library.
 You can also check out this [blog post](https://simplepush.io/blog/2017/01/29/esp8266-encrypted-notifications/) for more information.
