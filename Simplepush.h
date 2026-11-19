@@ -2,33 +2,37 @@
 #define Simplepush_h
 
 #include <Arduino.h>
-#include <Hash.h>
 
-#include <ESP8266HTTPClient.h>
-#include <ArduinoJson.h>
-
-#include "AES.h"
-#include "base64.h"
+typedef void (*SimplepushWaitCallback)();
 
 class Simplepush {
-	public:
-		Simplepush();
-		~Simplepush();
-		String wait_response();
-		void send(char *key, char *title, char *message, char *event, char *buta, char *butb);
-		void sendEncrypted(char *key, char *password, char *salt, char *title, char *message, char *event, char *buta, char *butb);
-	private:
-		String fdb;
-		AES aes;
-		void sendHttpPost(char *key, char* title, char* message, char *event, char *ivHex, char *buta, char *butb);
-		void genIV(byte *iv);
-		uint8_t getRandom();
-		void encrypt(char *data, int dataSize, uint8_t *key, uint8_t *iv, char *cipherUrlSafeBase64);
-		void genEncryptionKey(char *password, char *salt, uint8_t *key);
-		int getBase64CipherLen(int clearDataLen);
-		int hexify(uint8_t *in, size_t in_size, char *out, size_t out_size);
-		int getCipherLen(int clearDataLen);
-		void makeUrlSafe(char *base64Str);
+public:
+    Simplepush();
+    ~Simplepush();
+	 bool timedOut;
+    String wait_response();
+	void setWaitCallback(SimplepushWaitCallback callback);
+	void stop();
+    void send(
+        char *key,
+        char *title,
+        char *message,
+        char *event,
+        char *buta,
+        char *butb
+    );
+
+private:
+    String fdb;
+	SimplepushWaitCallback waitCallback;
+    void sendHttpPost(
+        char *key,
+        char *title,
+        char *message,
+        char *event,
+        char *buta,
+        char *butb
+    );
 };
 
 #endif
